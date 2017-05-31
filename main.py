@@ -4,11 +4,12 @@ from eparser import Parser
 from eval import Eval
 
 lex = Lexer('hello.e')
-# for i, token in enumerate(lex._read()):
-#     print token.image
+for i, token in enumerate(lex._read()):
+    print token.image
 
-ast = Parser(lex).expression()
-print Eval(ast).eval()
+ast = Parser(lex).program()
+print ast
+Eval(ast).eval()
 
 # print '\'' in r'!"#$%&\'()*+,-./:;=<>?@[\]^_`{|}~'
 

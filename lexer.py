@@ -20,7 +20,7 @@ class Lexer:
                 # print match
                 if match[0] != '' and match[1] == '':
                     yield Token(line_no, *match)
-            # yield Token(line_no, image='\n', id_image='\n')
+            yield Token(line_no, image=r'\n')
         yield Token(-1)
 
     def peek(self):
@@ -33,6 +33,7 @@ class Lexer:
 
 
 class Token:
+    # FIXME: tmp?
     def __init__(self, line_no, image='', command_image='', value_image='', str_image='', tmp='', id_image=''):
         self.line_no = line_no
         self.image = image
