@@ -71,6 +71,14 @@ class PrintAST(ASList):
         print result
 
 
+class LogAST(PrintAST):
+    def eval(self, env):
+        result = self.expr.eval(env)
+        if isinstance(result, int):
+            result = str(result)
+        print str(self.expr) + ": " + result
+
+
 class UnaryAST(ASList):
     def __init__(self, *args):
         ASList.__init__(self, *args)
@@ -112,6 +120,11 @@ class BinaryAST(ASList):
             elif self.op == '!=':
                 return AST.TRUE if left != right else AST.FALSE
             elif self.op == '+':
+                # 手写转换
+                if isinstance(left, str) and isinstance(right, int):
+                    right = str(right)
+                elif isinstance(left, int) and isinstance(right, str):
+                    raise Exception("cant add str to int")
                 return left + right
             elif self.op == '-':
                 return left - right

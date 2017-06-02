@@ -122,12 +122,15 @@ class Parser:
                 token = self.lexer.read()
                 args.extend([ASTLeaf(token), self.block()])
             return IfAST(*args)
-        if self._is_token('while'):
+        elif self._is_token('while'):
             token = self.lexer.read()
             return WhileAST(ASTLeaf(token), self.expr(), self.block())
-        if self._is_token('print'):
+        elif self._is_token('print'):
             token = self.lexer.read()
             return PrintAST(ASTLeaf(token), self.expr())
+        elif self._is_token('log'):
+            token = self.lexer.read()
+            return LogAST(ASTLeaf(token), self.expr())
         return self.expr()
 
     def _program(self):
