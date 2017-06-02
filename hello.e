@@ -1,13 +1,18 @@
-
-
-
-print 1+3;print 44*2
-100-1;100-5;
-500+1;
-if 1<2{
-
+even = 0
+odd = 0
+i = 1
+while i < 10 {
+    print i
+    if i % 2 == 0 {
+        even = even + i
+    } else {
+        odd = odd + i
+    }
+    print "even"
+    print even
+    print "odd"
+    print odd
+    i = i + 1
 }
-
-
-
-300+1;
+print even
+print odd

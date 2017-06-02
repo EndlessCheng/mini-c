@@ -15,7 +15,7 @@ class Lexer:
         self.r = self._read()
 
     def _read(self):
-        for line_no, line in enumerate(self.lines):
+        for line_no, line in enumerate(self.lines, 1):
             for match in self._pattern.findall(line):
                 # print match
                 if match[0] != '' and match[1] == '':
@@ -34,9 +34,9 @@ class Lexer:
 
 class Token:
     # FIXME: tmp?
-    def __init__(self, line_no, image='', command_image='', value_image='', str_image='', tmp='', id_image=''):
+    def __init__(self, line_no, image='', commit_image='', value_image='', str_image='', tmp='', id_image=''):
         self.line_no = line_no
         self.image = image
         self.value = int(value_image) if value_image != '' else None
-        self.str = str_image.replce(r'\"', '"').replce(r'\\', '\\').replce(r'\n', '\n') if str_image != '' else None
+        self.str = str_image.replace(r'\"', '"').replace(r'\\', '\\').replace(r'\n', '\n')[1:-1] if str_image != '' else None
         self.id = id_image if id_image != '' else None

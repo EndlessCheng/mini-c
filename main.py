@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 from lexer import Lexer
 from eparser import Parser
-from eval import Eval
+from environment import Environment
 
 lex = Lexer('hello.e')
 for i, token in enumerate(lex._read()):
@@ -9,7 +9,7 @@ for i, token in enumerate(lex._read()):
 
 ast = Parser(lex).program()
 print ast
-Eval(ast).eval()
+
+ast.eval(Environment())
 
 # print '\'' in r'!"#$%&\'()*+,-./:;=<>?@[\]^_`{|}~'
-

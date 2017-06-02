@@ -1,19 +1,32 @@
 # -*- coding:utf-8 -*-
 
+from ast import *
+
+
+class Precedence:
+    LEFT, RIGHT = range(2)
+
+    def __init__(self, value, assoc):
+        self.value = value
+        self.assoc = assoc
+
 
 class Parser:
-    class Precedence:
-        def __init__(self, value, left_assoc):
-            self.value = value
-            self.left_assoc = left_assoc
-
     def __init__(self, lex):
         self.lexer = lex
         self.operators = {
-            '+': self.Precedence(2, True),
-            '-': self.Precedence(2, True),
-            '*': self.Precedence(3, True),
-            '/': self.Precedence(3, True),
+            '=': Precedence(1, Precedence.RIGHT),
+            '<': Precedence(2, Precedence.LEFT),
+            '<=': Precedence(2, Precedence.LEFT),
+            '>': Precedence(2, Precedence.LEFT),
+            '>=': Precedence(2, Precedence.LEFT),
+            '==': Precedence(2, Precedence.LEFT),
+            '!=': Precedence(2, Precedence.LEFT),
+            '+': Precedence(3, Precedence.LEFT),
+            '-': Precedence(3, Precedence.LEFT),
+            '*': Precedence(4, Precedence.LEFT),
+            '/': Precedence(4, Precedence.LEFT),
+            '%': Precedence(4, Precedence.LEFT),
         }
 
     def _is_token(self, image):
@@ -37,14 +50,17 @@ class Parser:
             return e
         token = self.lexer.read()
         if token.value is not None:
-            return ASTLeaf(token)
-            # raise Exception("parse error")
+            return NumberLeaf(token)
+        elif token.str is not None:
+            return StringLeaf(token)
+        elif token.id is not None:
+            return NameLeaf(token)
 
     def factor(self):
         if self._is_token('-'):
             op = ASTLeaf(self.lexer.read())
             right = self.primary()
-            return ASList(AST.UNARY, op, right)
+            return UnaryAST(op, right)
         return self.primary()
 
     def expr(self):
@@ -57,7 +73,7 @@ class Parser:
 
     @staticmethod
     def _right_is_expr(prec, next_prec):
-        if next_prec.left_assoc:
+        if next_prec.assoc == Precedence.LEFT:
             return prec < next_prec.value
         return prec <= next_prec.value
 
@@ -68,10 +84,18 @@ class Parser:
         while next_prec is not None and self._right_is_expr(prec, next_prec):
             right = self._do_shift(right, next_prec.value)
             next_prec = self._next_op_prec()
-        return ASList(AST.BINARY, left, op, right)
+        return BinaryAST(left, op, right)
 
     def _block(self):
+        while True:
+            if self._is_token(';'):
+                self._consume_token(';')
+            elif self._is_token(r'\n'):
+                self._consume_token(r'\n')
+            else:
+                break
         while not self._is_token('}'):
+            statement = self.statement()
             while True:
                 if self._is_token(';'):
                     self._consume_token(';')
@@ -79,12 +103,13 @@ class Parser:
                     self._consume_token(r'\n')
                 else:
                     break
-            yield self.statement()
+            if statement is not None:
+                yield statement
 
     def block(self):
         if self._is_token('{'):
             self._consume_token('{')
-            ast = ASList(AST.LIST, *self._block())
+            ast = ASList(*self._block())
             self._consume_token('}')
             return ast
         raise Exception("parse error")
@@ -96,13 +121,13 @@ class Parser:
             if self._is_token('else'):
                 token = self.lexer.read()
                 args.extend([ASTLeaf(token), self.block()])
-            return ASList(AST.IF, *args)
+            return IfAST(*args)
         if self._is_token('while'):
             token = self.lexer.read()
-            return ASList(AST.WHILE, ASTLeaf(token), self.expr(), self.block())
+            return WhileAST(ASTLeaf(token), self.expr(), self.block())
         if self._is_token('print'):
             token = self.lexer.read()
-            return ASList(AST.PRINT, ASTLeaf(token), self.expr())
+            return PrintAST(ASTLeaf(token), self.expr())
         return self.expr()
 
     def _program(self):
@@ -117,53 +142,4 @@ class Parser:
             yield self.statement()
 
     def program(self):
-        return ASList(AST.LIST, *self._program())
-
-
-class AST:
-    LIST, PRINT, UNARY, BINARY, IF, WHILE = range(6)
-
-    def __init__(self):
-        pass
-
-
-class ASList(AST):
-    def __init__(self, ast_type, *args):
-        AST.__init__(self)
-        self.type = ast_type
-        self.children = args
-        if ast_type == AST.PRINT:
-            self.expr = args[1]
-        elif ast_type == AST.UNARY:
-            self.op = args[0].id
-            self.right = args[1]
-        elif ast_type == AST.BINARY:
-            self.left = args[0]
-            self.op = args[1].id
-            self.right = args[2]
-        elif ast_type == AST.IF:
-            self.expr = args[1]
-            self.if_block = args[2]
-            self.else_block = None
-            if len(args) == 5:
-                self.else_block = args[4]
-        elif ast_type == AST.WHILE:
-            self.expr = args[1]
-            self.block = args[2]
-        else:
-            pass
-
-    def __str__(self):
-        return '(' + ' '.join(map(str, self.children)) + ')'
-
-
-class ASTLeaf(AST):
-    def __init__(self, token):
-        AST.__init__(self)
-        self.token = token
-        self.value = token.value
-        self.str = token.str
-        self.id = token.id
-
-    def __str__(self):
-        return self.token.image
+        return ASList(*self._program())
